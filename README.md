@@ -26,7 +26,7 @@ WP SmartCrop allows you to set the 'focal point' of any image, right from the me
 1. Insert the image into a page or post
 1. Style your image, using the *img.wpsmartcrop-image* selector
 
-##Compatibility
+## Compatibility
 WP SmartCrop has been fully tested in the following browsers:
 
 * Safari
