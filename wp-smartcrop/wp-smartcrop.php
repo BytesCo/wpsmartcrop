@@ -3,7 +3,7 @@
  * Plugin Name: WP SmartCrop
  * Plugin URI: https://www.wpsmartcrop.com/
  * Description: Style your images exactly how you want them to appear, for any screen size, and never get a cut-off face.
- * Version: 2.0.6
+ * Version: 2.0.7
  * Author: Bytes.co
  * Author URI: https://bytes.co
  * License: GPLv2 or later
@@ -12,7 +12,7 @@
 
 if( !class_exists('WP_Smart_Crop') ) {
 	class WP_Smart_Crop {
-		public  $version = '2.0.6';
+		public  $version = '2.0.7';
 		private $plugin_dir_path;
 		private $plugin_dir_url;
 		private $current_image = null;
@@ -66,7 +66,7 @@ if( !class_exists('WP_Smart_Crop') ) {
 		}
 
 		function plugin_action_links( $links ) {
-			$links[] = '<a href="'. esc_url( get_admin_url(null, 'options-general.php?page=wp-smartcrop') ) .'">Settings</a>';
+			$links[] = '<a href="'. esc_url( get_admin_url(null, 'options-general.php?page=ep-smartcrop') ) .'">Settings</a>';
 			//$links[] = '<a href="https://www.wpsmartcrop.com/addons" target="_blank">Get Addons</a>';
 			return $links;
 		}
@@ -431,10 +431,29 @@ if( !class_exists('WP_Smart_Crop') ) {
 
 		function the_content( $content ) {
 			$tags = $this->extract_tags( $content, 'img', true, true );
+			$figure_tags = $this->extract_tags( $content, 'figure', false, true ); // wordpress can attach size details to a figure wrapper now
+			$tags = array_merge( $tags, $figure_tags );
+
 			$unique_tags = array();
 			$ids = array();
 			foreach( $tags as $tag ) {
-				list( $id, $size ) = $this->get_id_and_size_from_tag( $tag );
+				$id = null;
+				$size = null;
+				if ( $tag['tag_name'] == 'img' ) {
+					list( $id, $size ) = $this->get_id_and_size_from_tag( $tag );
+				} elseif ( $tag['tag_name'] ?? null == 'figure' ) { // specially process our figure tags to get size data
+					$img_tag = $this->extract_tags( $tag['full_tag'] ?? '', 'img', true, true );
+					// we're processing only the first img
+					if ( $img_tag && count($img_tag) ) {
+						$img_tag = $img_tag[0];
+						$tag['img_tag'] = $img_tag;
+					} else {
+						continue;
+					}
+					$img_tag['attributes']['class'] .= $tag['attributes']['class'];
+					list( $id, $size ) = $this->get_id_and_size_from_tag( $img_tag );
+				}
+				//var_dump( $size );
 				if( $id && $size ) {
 					$ids[] = $id;
 					$tag['id'] = $id;
@@ -724,7 +743,7 @@ if( !class_exists('WP_Smart_Crop') ) {
 		private function make_new_content_img_tag( $tag ) {
 			$id   = $tag['id'];
 			$size = $tag['size'];
-			$atts = $tag['attributes'];
+			$atts = $tag['img_tag']['attributes'] ?: $tag['attributes'];
 			$focus_attr = $this->get_smartcrop_focus_attr( $id, $size );
 			if( $focus_attr ) {
 				if( !isset( $atts['class'] ) || !$atts['class'] ) {
@@ -735,11 +754,18 @@ if( !class_exists('WP_Smart_Crop') ) {
 				$atts['class'] .= "wpsmartcrop-image";
 				$atts['data-smartcrop-focus'] = $focus_attr;
 			}
-			$new_tag = '<img';
-			foreach( $atts as $name => $val ) {
-				$new_tag .= ' ' . $name . '="' . $val . '"';
+			$value = '';
+			$old_img_tag = $tag['full_tag'];
+			// special processing for figure tags
+			if ( $tag['tag_name'] == 'figure' ) {
+				$old_img_tag = $tag['img_tag']['full_tag'] ?? null;
 			}
-			$new_tag .= ' />';
+			$new_img_tag = '<img';
+			foreach( $atts as $name => $val ) {
+				$new_img_tag .= ' ' . $name . '="' . $val . '"';
+			}
+			$new_img_tag .= ' />';
+			$new_tag = str_replace( $old_img_tag, $new_img_tag, $tag['full_tag'] );
 			return $new_tag;
 		}
 
