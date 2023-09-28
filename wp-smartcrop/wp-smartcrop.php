@@ -66,7 +66,7 @@ if( !class_exists('WP_Smart_Crop') ) {
 		}
 
 		function plugin_action_links( $links ) {
-			$links[] = '<a href="'. esc_url( get_admin_url(null, 'options-general.php?page=ep-smartcrop') ) .'">Settings</a>';
+			$links[] = '<a href="'. esc_url( get_admin_url(null, 'options-general.php?page=wp-smartcrop') ) .'">Settings</a>';
 			//$links[] = '<a href="https://www.wpsmartcrop.com/addons" target="_blank">Get Addons</a>';
 			return $links;
 		}
@@ -441,7 +441,7 @@ if( !class_exists('WP_Smart_Crop') ) {
 				$size = null;
 				if ( $tag['tag_name'] == 'img' ) {
 					list( $id, $size ) = $this->get_id_and_size_from_tag( $tag );
-				} elseif ( $tag['tag_name'] ?? null == 'figure' ) { // specially process our figure tags to get size data
+				} elseif ( $tag['tag_name'] == 'figure' ) { // specially process our figure tags to get size data
 					$img_tag = $this->extract_tags( $tag['full_tag'] ?? '', 'img', true, true );
 					// we're processing only the first img
 					if ( $img_tag && count($img_tag) ) {
