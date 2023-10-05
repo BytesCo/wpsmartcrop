@@ -450,10 +450,12 @@ if( !class_exists('WP_Smart_Crop') ) {
 					} else {
 						continue;
 					}
-					$img_tag['attributes']['class'] .= $tag['attributes']['class'];
-					list( $id, $size ) = $this->get_id_and_size_from_tag( $img_tag );
+					$img_tag['attributes']['class'] ??= '';
+					if ( ! empty( $tag['attributes']['class'] ) ) {
+						$img_tag['attributes']['class'] .= ' ' . $tag['attributes']['class'];
+						list( $id, $size ) = $this->get_id_and_size_from_tag( $img_tag );
+					}
 				}
-				//var_dump( $size );
 				if( $id && $size ) {
 					$ids[] = $id;
 					$tag['id'] = $id;
@@ -743,7 +745,7 @@ if( !class_exists('WP_Smart_Crop') ) {
 		private function make_new_content_img_tag( $tag ) {
 			$id   = $tag['id'];
 			$size = $tag['size'];
-			$atts = $tag['img_tag']['attributes'] ?: $tag['attributes'];
+			$atts = $tag['img_tag']['attributes'] ?? null ?: $tag['attributes'];
 			$focus_attr = $this->get_smartcrop_focus_attr( $id, $size );
 			if( $focus_attr ) {
 				if( !isset( $atts['class'] ) || !$atts['class'] ) {
