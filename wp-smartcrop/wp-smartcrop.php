@@ -15,6 +15,7 @@ if( !class_exists('WP_Smart_Crop') ) {
 		public  $version = '2.0.7';
 		private $plugin_dir_path;
 		private $plugin_dir_url;
+		private $image_sizes = null;
 		private $current_image = null;
 		private $focus_cache;
 		private $upload_focus = null;
@@ -431,8 +432,6 @@ if( !class_exists('WP_Smart_Crop') ) {
 
 		function the_content( $content ) {
 			$tags = $this->extract_tags( $content, 'img', true, true );
-			$figure_tags = $this->extract_tags( $content, 'figure', false, true ); // wordpress can attach size details to a figure wrapper now
-			$tags = array_merge( $tags, $figure_tags );
 
 			$unique_tags = array();
 			$ids = array();
@@ -441,19 +440,7 @@ if( !class_exists('WP_Smart_Crop') ) {
 				$size = null;
 				if ( $tag['tag_name'] == 'img' ) {
 					list( $id, $size ) = $this->get_id_and_size_from_tag( $tag );
-				} elseif ( $tag['tag_name'] == 'figure' ) { // specially process our figure tags to get size data
-					$img_tag = $this->extract_tags( $tag['full_tag'] ?? '', 'img', true, true );
-					// we're processing only the first img
-					if ( $img_tag && count($img_tag) ) {
-						$img_tag = $img_tag[0];
-						$tag['img_tag'] = $img_tag;
-					} else {
-						continue;
-					}
-					$img_tag['attributes']['class'] .= $tag['attributes']['class'];
-					list( $id, $size ) = $this->get_id_and_size_from_tag( $img_tag );
 				}
-				//var_dump( $size );
 				if( $id && $size ) {
 					$ids[] = $id;
 					$tag['id'] = $id;
@@ -620,6 +607,9 @@ if( !class_exists('WP_Smart_Crop') ) {
 			return true;
 		}
 		private function get_image_sizes() {
+			if ( $this->image_sizes !== null ) {
+				return $this->image_sizes;
+			}
 			global $_wp_additional_image_sizes;
 			$custom_sizes = $_wp_additional_image_sizes;
 			if( !is_array( $custom_sizes ) ) {
@@ -644,6 +634,7 @@ if( !class_exists('WP_Smart_Crop') ) {
 					), $custom_sizes[ $_size ] );
 				}
 			}
+			$this->image_sizes = $sizes;
 			return $sizes;
 		}
 
@@ -722,11 +713,11 @@ if( !class_exists('WP_Smart_Crop') ) {
 			return $tags;
 		}
 		private function get_id_and_size_from_tag( $tag ) {
+			$ret_val = array( false, false );
 			if( isset( $tag['attributes'] ) && isset( $tag['attributes']['class'] ) && $tag['attributes']['class'] ) {
 				$classes     = explode( ' ', $tag['attributes']['class'] );
 				$id_prefix   = 'wp-image-';
 				$size_prefix = 'size-';
-				$ret_val = array( false, false );
 				foreach( $classes as $class ) {
 					if( !$ret_val[0] && strpos( $class, $id_prefix ) === 0 ) {
 						$ret_val[0] = intval( substr( $class, strlen( $id_prefix ) ) );
@@ -736,14 +727,57 @@ if( !class_exists('WP_Smart_Crop') ) {
 						break;
 					}
 				}
-				return $ret_val;
+				if ( $ret_val[0] && $ret_val[1] ) {
+					return $ret_val;
+				}
 			}
-			return false;
+			if ( $tag['attributes']['src'] ?? false && ( ! $ret_val[0] || ! $ret_val[1] ) ) { // try to get data from src
+				if ( ! $ret_val[0] ) { // missing id
+					$ret_val[0] = attachment_url_to_postid( $tag['attributes']['src'] );
+					if ( ! $ret_val[0] ) { // Our last attempt. Try to derive original image url
+						// Default resized wordpress attachment filenames are formatted as: {name}-{width}x{height}.{ext}
+						// This regex should capture the source image filename that matches this format
+						$url_pattern = '/(.*)-[0-9]*x[0-9]*(\..*)/';
+						$matches = array();
+						$result = preg_match( $url_pattern, $tag['attributes']['src'], $matches );
+						if ( $matches ) {
+							$url = $matches[1] . $matches[2];
+							$ret_val[0] = attachment_url_to_postid( $url );
+						}
+					}					
+				}
+				if ( ! $ret_val[1] && $ret_val[0] ) { // missing size, but have id
+					// Default resized wordpress attachment filenames are formatted as: {name}-{width}x{height}.{ext}
+					// This regex should capture the width and height of filenames that match this format
+					// As a possible alternative, we could rely on wp_getimagesize()
+					$size_pattern = '/-([0-9]*)x([0-9]*)\./';
+					$matches = array();
+					$result = preg_match( $size_pattern, $tag['attributes']['src'], $matches );
+					if ( $result ) {
+						$image_sizes = $this->get_image_sizes();
+						foreach( $image_sizes as $image_size => $image_details ) {
+							if ( $image_details['width'] == $matches[1] && $image_details['height'] == $matches[2] ) {
+								$ret_val[1] = $image_size;
+								break;
+							} else if ( ! $image_details['crop'] ) {
+								if ( ( $image_details['width'] == $matches[1] && $image_details['height'] > $matches[2] ) ||
+									( $image_details['width'] > $matches[1] && $image_details['height'] == $matches[2] ) ) {
+									$ret_val[1] = $image_size;
+									break;
+								}
+							}
+						}
+					} else { // if there no dimensions, we should assume full width
+						$ret_val[1] = 'full';
+					}
+				}
+			}
+			return $ret_val;
 		}
 		private function make_new_content_img_tag( $tag ) {
 			$id   = $tag['id'];
 			$size = $tag['size'];
-			$atts = $tag['img_tag']['attributes'] ?: $tag['attributes'];
+			$atts = $tag['attributes'];
 			$focus_attr = $this->get_smartcrop_focus_attr( $id, $size );
 			if( $focus_attr ) {
 				if( !isset( $atts['class'] ) || !$atts['class'] ) {
@@ -756,10 +790,6 @@ if( !class_exists('WP_Smart_Crop') ) {
 			}
 			$value = '';
 			$old_img_tag = $tag['full_tag'];
-			// special processing for figure tags
-			if ( $tag['tag_name'] == 'figure' ) {
-				$old_img_tag = $tag['img_tag']['full_tag'] ?? null;
-			}
 			$new_img_tag = '<img';
 			foreach( $atts as $name => $val ) {
 				$new_img_tag .= ' ' . $name . '="' . $val . '"';
