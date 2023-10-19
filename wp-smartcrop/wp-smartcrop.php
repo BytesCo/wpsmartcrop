@@ -607,7 +607,7 @@ if( !class_exists('WP_Smart_Crop') ) {
 			return true;
 		}
 		private function get_image_sizes() {
-			if ( $this->image_sizes ) {
+			if ( $this->image_sizes !== null ) {
 				return $this->image_sizes;
 			}
 			global $_wp_additional_image_sizes;
@@ -734,7 +734,9 @@ if( !class_exists('WP_Smart_Crop') ) {
 			if ( $tag['attributes']['src'] ?? false && ( ! $ret_val[0] || ! $ret_val[1] ) ) { // try to get data from src
 				if ( ! $ret_val[0] ) { // missing id
 					$ret_val[0] = attachment_url_to_postid( $tag['attributes']['src'] );
-					if ( ! $ret_val[0] ) { // our last attempt. Try to derive original image url
+					if ( ! $ret_val[0] ) { // Our last attempt. Try to derive original image url
+						// Default resized wordpress attachment filenames are formatted as: {name}-{width}x{height}.{ext}
+						// This regex should capture the source image filename that matches this format
 						$url_pattern = '/(.*)-[0-9]*x[0-9]*(\..*)/';
 						$matches = array();
 						$result = preg_match( $url_pattern, $tag['attributes']['src'], $matches );
@@ -745,7 +747,9 @@ if( !class_exists('WP_Smart_Crop') ) {
 					}					
 				}
 				if ( ! $ret_val[1] && $ret_val[0] ) { // missing size, but have id
-					// get height and width from url
+					// Default resized wordpress attachment filenames are formatted as: {name}-{width}x{height}.{ext}
+					// This regex should capture the width and height of filenames that match this format
+					// As a possible alternative, we could rely on wp_getimagesize()
 					$size_pattern = '/-([0-9]*)x([0-9]*)\./';
 					$matches = array();
 					$result = preg_match( $size_pattern, $tag['attributes']['src'], $matches );
