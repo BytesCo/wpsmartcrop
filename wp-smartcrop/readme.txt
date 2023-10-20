@@ -61,12 +61,7 @@ WP SmartCrop has been fully tested in the following browsers:
 * Safari
 * Chrome
 * Firefox
-* Opera
 * Microsoft Edge
-* Internet Explorer 9-11
-* IOS 7+
-* Android 4.0+
-* Windows Phone 8.1
 
 This is by no means an exhaustive list of supported devices; it just represents our primary target platforms.
 
