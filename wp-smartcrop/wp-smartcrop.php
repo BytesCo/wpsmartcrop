@@ -666,7 +666,7 @@ if( !class_exists('WP_Smart_Crop') ) {
 			}
 			$attribute_pattern =
 				'@
-				(?P<name>\w+)                         # attribute name
+				(?P<name>[^\t\n\f\r />="\'<]+)                         # attribute name
 				\s*=\s*
 				(
 					(?P<quote>[\"\'])(?P<value_quoted>.*?)(?P=quote)    # a quoted value
