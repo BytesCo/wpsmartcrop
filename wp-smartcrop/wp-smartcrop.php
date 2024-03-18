@@ -617,7 +617,7 @@ if( !class_exists('WP_Smart_Crop') ) {
 			}
 			$sizes = array();
 			foreach( get_intermediate_image_sizes() as $_size ) {
-				if( !in_array( $_size, $custom_sizes ) ) {
+				if( ! isset( $custom_sizes[ $_size ] ) ) {
 					$temp = array(
 						'width'  => get_option( $_size . "_size_w" ),
 						'height' => get_option( $_size . "_size_h" ),
@@ -626,7 +626,7 @@ if( !class_exists('WP_Smart_Crop') ) {
 					if( $temp['width'] || $temp['height'] ) {
 						$sizes[ $_size ] = $temp;
 					}
-				} elseif( isset( $custom_sizes[ $_size ] ) ) {
+				} elseif ( is_array( $custom_sizes[ $_size ] ) ) {
 					$sizes[ $_size ] = shortcode_atts( array(
 						'width' => 0,
 						'height'=> 0,
@@ -744,7 +744,7 @@ if( !class_exists('WP_Smart_Crop') ) {
 							$url = $matches[1] . $matches[2];
 							$ret_val[0] = attachment_url_to_postid( $url );
 						}
-					}					
+					}
 				}
 				if ( ! $ret_val[1] && $ret_val[0] ) { // missing size, but have id
 					// Default resized wordpress attachment filenames are formatted as: {name}-{width}x{height}.{ext}
