@@ -105,6 +105,9 @@ A. That's not really a question, but at least our moms like us. Feel free to sen
 
 == Changelog ==
 
+= 2.0.9 =
+* Fix attribute parsing issue
+
 = 2.0.8 =
 * Add support for generic img tags with the default url format
 
