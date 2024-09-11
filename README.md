@@ -41,9 +41,6 @@ WP SmartCrop has been fully tested in the following browsers:
 
 This is by no means an exhaustive list of supported devices; it just represents our primary target platforms.
 
-## Website
-[https://www.wpsmartcrop.com/](https://www.wpsmartcrop.com/)
-
 ## Please Rate/Review and Enjoy
 Your Ratings and Reviews help us to direct our development, and help other users know what to expect.
 
@@ -59,7 +56,7 @@ A. WP SmartCrop is designed to simplify the process for styling your responsive 
         height: 200px;
     }
 
-Once you've verified that the plugin is working, go wild!  Some example CSS for inspiration can be found at [https://www.wpsmartcrop.com/demos](https://www.wpsmartcrop.com/demos)
+Once you've verified that the plugin is working, go wild!
 
 ### Q. Why can't you choose the focal points for me?
 A. We're currently working on a "pro" version that will do exactly that. If you're interested in the feature, let us know as a feature request.  It always helps to see people interested in further developments.
