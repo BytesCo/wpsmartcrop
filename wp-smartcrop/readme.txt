@@ -97,6 +97,8 @@ A. That's not really a question, but at least our moms like us. Feel free to sen
 
 
 == Changelog ==
+= 2.0.10 =
+* Remove references to plugin website
 
 = 2.0.9 =
 * Fix attribute parsing issue

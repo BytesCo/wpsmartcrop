@@ -2,7 +2,7 @@
 /**
  * Plugin Name: WP SmartCrop
  * Description: Style your images exactly how you want them to appear, for any screen size, and never get a cut-off face.
- * Version: 2.0.9
+ * Version: 2.0.10
  * Author: Bytes.co
  * Author URI: https://bytes.co
  * License: GPLv2 or later
@@ -11,7 +11,7 @@
 
 if( !class_exists('WP_Smart_Crop') ) {
 	class WP_Smart_Crop {
-		public  $version = '2.0.9';
+		public  $version = '2.0.10';
 		private $plugin_dir_path;
 		private $plugin_dir_url;
 		private $image_sizes = null;
